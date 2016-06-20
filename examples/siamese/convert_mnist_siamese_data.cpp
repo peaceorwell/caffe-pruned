@@ -18,6 +18,11 @@
 
 #ifdef USE_LEVELDB
 #include "leveldb/db.h"
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
 
 uint32_t swap_endian(uint32_t val) {
     val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);

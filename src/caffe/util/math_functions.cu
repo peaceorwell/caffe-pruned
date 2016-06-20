@@ -2,7 +2,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/functional.h>  // thrust::plus
 #include <thrust/reduce.h>
-
+#include <iostream>
 #include <cmath>
 
 #include "caffe/common.hpp"
@@ -51,7 +51,32 @@ void caffe_gpu_gemv<float>(const CBLAS_TRANSPOSE TransA, const int M,
   CUBLAS_CHECK(cublasSgemv(Caffe::cublas_handle(), cuTransA, N, M, &alpha,
       A, N, x, 1, &beta, y, 1));
 }
+template <>
+void caffe_gpu_csrmv<double>(const CBLAS_TRANSPOSE TransA, const int M,
+        const int N,const double alpha,const double* csrval,const int* csrrowptr,const int* csrcolind,const int nnz,const double* x,const double beta,double* y){
+     cusparseOperation_t cuTransA=
+        (TransA == CblasNoTrans)?CUSPARSE_OPERATION_NON_TRANSPOSE:CUSPARSE_OPERATION_TRANSPOSE;
+     cusparseMatDescr_t descrA;
+     CUSPARSE_CHECK(cusparseCreateMatDescr(&descrA));
+     cusparseSetMatType(descrA,CUSPARSE_MATRIX_TYPE_GENERAL);
+     cusparseSetMatIndexBase(descrA,CUSPARSE_INDEX_BASE_ZERO);
+     cusparseDirection_t dirA=CUSPARSE_DIRECTION_COLUMN;
+     CUSPARSE_CHECK(cusparseDcsrmv(Caffe::cusparse_handle(),cuTransA,M,N,nnz,&alpha,descrA,csrval,csrrowptr,csrcolind,x,&beta,y));
+      cusparseDestroyMatDescr(descrA);
+    }
 
+template <>
+void caffe_gpu_csrmv<float>(const CBLAS_TRANSPOSE TransA, const int M,
+        const int N,const float alpha,const float* csrval,const int* csrrowptr,const int* csrcolind,const int nnz,const float* x,const float beta,float* y){
+     cusparseOperation_t cuTransA=
+        (TransA == CblasNoTrans)?CUSPARSE_OPERATION_NON_TRANSPOSE:CUSPARSE_OPERATION_TRANSPOSE;
+//     cusparseMatDescr_t descrA;
+//     CUSPARSE_CHECK(cusparseCreateMatDescr(&descrA));
+//     cusparseSetMatType(descrA,CUSPARSE_MATRIX_TYPE_GENERAL);
+//     cusparseSetMatIndexBase(descrA,CUSPARSE_INDEX_BASE_ZERO);
+     CUSPARSE_CHECK(cusparseScsrmv(Caffe::cusparse_handle(),cuTransA,M,N,nnz,&alpha,Caffe::cusparse_descr(),csrval,csrrowptr,csrcolind,x,&beta,y));
+//      cusparseDestroyMatDescr(descrA);
+    }
 template <>
 void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
     const int N, const double alpha, const double* A, const double* x,
@@ -65,6 +90,7 @@ void caffe_gpu_gemv<double>(const CBLAS_TRANSPOSE TransA, const int M,
 template <>
 void caffe_gpu_axpy<float>(const int N, const float alpha, const float* X,
     float* Y) {
+  
   CUBLAS_CHECK(cublasSaxpy(Caffe::cublas_handle(), N, &alpha, X, 1, Y, 1));
 }
 

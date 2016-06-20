@@ -11,6 +11,7 @@ namespace bp = boost::python;
 #include <string>
 #include <vector>
 
+#include "caffe/common.hpp"
 #include "boost/algorithm/string.hpp"
 #include "caffe/caffe.hpp"
 #include "caffe/util/signal_handler.h"
@@ -47,7 +48,9 @@ DEFINE_string(sigint_effect, "stop",
 DEFINE_string(sighup_effect, "snapshot",
              "Optional; action to take when a SIGHUP signal is received: "
              "snapshot, stop or none.");
-
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
 // A simple registry for caffe commands.
 typedef int (*BrewFunction)();
 typedef std::map<caffe::string, BrewFunction> BrewMap;
@@ -241,6 +244,7 @@ int test() {
     LOG(INFO) << "GPU device name: " << device_prop.name;
 #endif
     Caffe::SetDevice(gpus[0]);
+    LOG(INFO)<<"setDevece";
     Caffe::set_mode(Caffe::GPU);
   } else {
     LOG(INFO) << "Use CPU.";

@@ -17,6 +17,11 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"
 #include "caffe/util/format.hpp"
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
 
 using caffe::Datum;
 using boost::scoped_ptr;

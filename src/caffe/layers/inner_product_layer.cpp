@@ -38,6 +38,9 @@ void InnerProductLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       weight_shape[1] = K_;
     }
     this->blobs_[0].reset(new Blob<Dtype>(weight_shape));
+    this->blobs_[0]->setSparse();
+    this->blobs_[0]->Addmask(weight_shape);
+    LOG(INFO)<<this->blobs_[0]->sparse();
     // fill the weights
     shared_ptr<Filler<Dtype> > weight_filler(GetFiller<Dtype>(
         this->layer_param_.inner_product_param().weight_filler()));

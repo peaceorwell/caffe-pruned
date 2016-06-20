@@ -32,6 +32,7 @@ void classname<Dtype>::funcname##_##gpu(const vector<Blob<Dtype>*>& top, \
 #else  // Normal GPU + CPU Caffe.
 
 #include <cublas_v2.h>
+#include <cusparse_v2.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <curand.h>
@@ -58,7 +59,14 @@ void classname<Dtype>::funcname##_##gpu(const vector<Blob<Dtype>*>& top, \
     CHECK_EQ(status, CUBLAS_STATUS_SUCCESS) << " " \
       << caffe::cublasGetErrorString(status); \
   } while (0)
-
+//new add cusparse code :start
+#define CUSPARSE_CHECK(condition) \
+    do {\
+        cusparseStatus_t status = condition; \
+        CHECK_EQ(status,CUSPARSE_STATUS_SUCCESS)<< " "\
+        << caffe::cusparseGetErrorString(status); \
+    }while (0)
+//new add end
 #define CURAND_CHECK(condition) \
   do { \
     curandStatus_t status = condition; \
@@ -79,6 +87,7 @@ namespace caffe {
 
 // CUDA: library error reporting.
 const char* cublasGetErrorString(cublasStatus_t error);
+const char* cusparseGetErrorString(cusparseStatus_t error);
 const char* curandGetErrorString(curandStatus_t error);
 
 // CUDA: use 512 threads per block

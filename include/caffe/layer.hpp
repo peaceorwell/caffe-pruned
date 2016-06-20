@@ -508,7 +508,10 @@ void Layer<Dtype>::ToProto(LayerParameter* param, bool write_diff) {
   param->Clear();
   param->CopyFrom(layer_param_);
   param->clear_blobs();
+  LOG(INFO)<<layer_param_.name();
+  LOG(INFO)<<layer_param_.type();
   for (int i = 0; i < blobs_.size(); ++i) {
+    LOG(INFO)<<blobs_[i]->sparse();
     blobs_[i]->ToProto(param->add_blobs(), write_diff);
   }
 }

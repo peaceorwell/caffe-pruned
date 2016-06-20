@@ -3,18 +3,35 @@
 #include "caffe/filler.hpp"
 #include "caffe/layers/inner_product_layer.hpp"
 #include "caffe/util/math_functions.hpp"
-
+#include <iostream>
+#include <unistd.h>
 namespace caffe {
 
 template <typename Dtype>
 void InnerProductLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
-  const Dtype* bottom_data = bottom[0]->gpu_data();
+    const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = top[0]->mutable_gpu_data();
   const Dtype* weight = this->blobs_[0]->gpu_data();
   if (M_ == 1) {
-    caffe_gpu_gemv<Dtype>(CblasNoTrans, N_, K_, (Dtype)1.,
-                         weight, bottom_data, (Dtype)0., top_data);
+  LOG(INFO)<<"here is csrmv";
+  const Dtype* csrval = this->blobs_[0]->gpu_csrval();
+  const int* csrrowptr = this->blobs_[0]->gpu_csrrowptr();
+  const int* csrcolind = this->blobs_[0]->gpu_csrcolind();
+  const int nnz=this->blobs_[0]->nnz();
+   caffe_gpu_csrmv<Dtype>(CblasNoTrans, N_, K_, (Dtype)1.,
+                         csrval,csrrowptr,csrcolind,nnz, bottom_data, (Dtype)0., top_data);
+
+
+  ////////////////printf outdoor top_data//////////////////////////////
+  // float* top_data_=(float*)malloc(N_*sizeof(float));
+  // LOG(INFO)<<"outdoor top_data";
+  // cudaMemcpy(top_data_,top_data,N_*sizeof(float),cudaMemcpyDeviceToHost);
+  // for(int i=0;i<N_;i++)
+  //     std::cout<<top_data_[i]<<" ";
+  // std::cout<<std::endl;
+  //free(top_data_);
+  //////////////////////////end////////////////////////////////////////
     if (bias_term_)
       caffe_gpu_axpy<Dtype>(N_, bias_multiplier_.cpu_data()[0],
                             this->blobs_[1]->gpu_data(), top_data);

@@ -25,6 +25,11 @@
 #define NPY_ARRAY_C_CONTIGUOUS NPY_C_CONTIGUOUS
 #define PyArray_SetBaseObject(arr, x) (PyArray_BASE(arr) = (x))
 #endif
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
 
 namespace bp = boost::python;
 
@@ -270,12 +275,21 @@ BOOST_PYTHON_MODULE(_caffe) {
     .add_property("width",    &Blob<Dtype>::width)
     .add_property("count",    static_cast<int (Blob<Dtype>::*)() const>(
         &Blob<Dtype>::count))
+    .add_property("nnz",      static_cast<int (Blob<Dtype>::*)() const>(
+        &Blob<Dtype>::nnz))
+    .add_property("sparse",   static_cast<bool (Blob<Dtype>::*)() const>(
+        &Blob<Dtype>::sparse))
     .def("reshape",           bp::raw_function(&Blob_Reshape))
     .add_property("data",     bp::make_function(&Blob<Dtype>::mutable_cpu_data,
           NdarrayCallPolicies()))
     .add_property("diff",     bp::make_function(&Blob<Dtype>::mutable_cpu_diff,
+          NdarrayCallPolicies()))
+    .add_property("mask",     bp::make_function(&Blob<Dtype>::mutable_cpu_mask,
+          NdarrayCallPolicies()))
+    .add_property("csrval",   bp::make_function(&Blob<Dtype>::mutable_cpu_csrval,
           NdarrayCallPolicies()));
-  bp::register_ptr_to_python<shared_ptr<Blob<Dtype> > >();
+
+ bp::register_ptr_to_python<shared_ptr<Blob<Dtype> > >();
 
   bp::class_<Layer<Dtype>, shared_ptr<PythonLayer<Dtype> >,
     boost::noncopyable>("Layer", bp::init<const LayerParameter&>())

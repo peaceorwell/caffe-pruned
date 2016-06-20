@@ -9,9 +9,12 @@
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/syncedmem.hpp"
 
+//DECLARE_string(step);
+
 const int kMaxBlobAxes = 32;
 
 namespace caffe {
+
 
 /**
  * @brief A wrapper around SyncedMemory holders serving as the basic
@@ -23,8 +26,7 @@ namespace caffe {
 template <typename Dtype>
 class Blob {
  public:
-  Blob()
-       : data_(), diff_(), count_(0), capacity_(0) {}
+  Blob(): data_(),diff_(),mask_(),csrval_(),csrrowptr_(),csrcolind_(),sparse_(false), count_(0), capacity_(0),nnz_(0) {}
 
   /// @brief Deprecated; use <code>Blob(const vector<int>& shape)</code>.
   explicit Blob(const int num, const int channels, const int height,
@@ -49,6 +51,7 @@ class Blob {
    * propagate the new input shape to higher layers.
    */
   void Reshape(const vector<int>& shape);
+  void Addmask(const vector<int>& shape);
   void Reshape(const BlobShape& shape);
   void ReshapeLike(const Blob& other);
   inline string shape_string() const {
@@ -73,6 +76,11 @@ class Blob {
   }
   inline int num_axes() const { return shape_.size(); }
   inline int count() const { return count_; }
+  inline int nnz() const { return nnz_; }
+  inline bool sparse() const {return sparse_;}
+  inline void setSparse(){sparse_=true;}
+  inline void clearSparse(){sparse_=false;}
+  inline void setNnz(int num){nnz_=num;return;}
 
   /**
    * @brief Compute the volume of a slice; i.e., the product of dimensions
@@ -197,7 +205,11 @@ class Blob {
       const int w) const {
     return cpu_diff()[offset(n, c, h, w)];
   }
-
+  inline Dtype mask_at(const int n, const int c, const int h,
+  		const int w) const{
+  	return cpu_mask()[offset(n, c, h, w)];
+  }
+ 
   inline Dtype data_at(const vector<int>& index) const {
     return cpu_data()[offset(index)];
   }
@@ -205,15 +217,36 @@ class Blob {
   inline Dtype diff_at(const vector<int>& index) const {
     return cpu_diff()[offset(index)];
   }
-
+  inline Dtype mask_at(const vector<int>& index) const {
+    return cpu_mask()[offset(index)];
+  }
+    
   inline const shared_ptr<SyncedMemory>& data() const {
     CHECK(data_);
     return data_;
   }
-
   inline const shared_ptr<SyncedMemory>& diff() const {
     CHECK(diff_);
     return diff_;
+  }
+  inline const shared_ptr<SyncedMemory>& mask() const {
+    CHECK(mask_);
+    return mask_;
+  }
+
+  inline const shared_ptr<SyncedMemory>& csrval() const {
+    CHECK(csrval_);
+    return csrval_;
+  }
+
+  inline const shared_ptr<SyncedMemory>& csrrowptr() const {
+    CHECK(csrrowptr_);
+    return csrrowptr_;
+  }
+
+  inline const shared_ptr<SyncedMemory>& csrcolind() const {
+    CHECK(csrcolind_);
+    return csrcolind_;
   }
 
   const Dtype* cpu_data() const;
@@ -222,28 +255,57 @@ class Blob {
   const Dtype* gpu_data() const;
   const Dtype* cpu_diff() const;
   const Dtype* gpu_diff() const;
+  const Dtype* cpu_mask() const;
+
+  const Dtype* cpu_csrval() const;
+  const int* cpu_csrrowptr() const;
+  const int* cpu_csrcolind() const;
+
+
+  const Dtype* gpu_mask() const;
+
+  const Dtype* gpu_csrval() const;
+  const int* gpu_csrrowptr() const;
+  const int* gpu_csrcolind() const;
+
+
+
   Dtype* mutable_cpu_data();
   Dtype* mutable_gpu_data();
   Dtype* mutable_cpu_diff();
   Dtype* mutable_gpu_diff();
+  Dtype* mutable_cpu_mask();
+  Dtype* mutable_cpu_csrval();
+  int* mutable_cpu_csrrowptr();
+  int* mutable_cpu_csrcolind();
+  Dtype* mutable_gpu_mask();
+  Dtype* mutable_gpu_csrval();
+  int* mutable_gpu_csrrowptr();
+  int* mutable_gpu_csrcolind();
   void Update();
   void FromProto(const BlobProto& proto, bool reshape = true);
-  void ToProto(BlobProto* proto, bool write_diff = false) const;
+  void ToProto(BlobProto* proto,bool write_diff = false);
 
   /// @brief Compute the sum of absolute values (L1 norm) of the data.
   Dtype asum_data() const;
   /// @brief Compute the sum of absolute values (L1 norm) of the diff.
   Dtype asum_diff() const;
+  Dtype asum_mask() const;
+  Dtype asum_csrval() const;
   /// @brief Compute the sum of squares (L2 norm squared) of the data.
   Dtype sumsq_data() const;
   /// @brief Compute the sum of squares (L2 norm squared) of the diff.
   Dtype sumsq_diff() const;
-
+  Dtype sumsq_mask() const;
+  Dtype sumsq_csrval() const;
   /// @brief Scale the blob data by a constant factor.
   void scale_data(Dtype scale_factor);
   /// @brief Scale the blob diff by a constant factor.
   void scale_diff(Dtype scale_factor);
-
+  void scale_mask(Dtype scale_factor);
+  void scale_csrval(Dtype scale_factor);
+  void scale_csrrowptr(Dtype scale_factor);
+  void scale_csrcolind(Dtype scale_factor);
   /**
    * @brief Set the data_ shared_ptr to point to the SyncedMemory holding the
    *        data_ of Blob other -- useful in Layer%s which simply perform a copy
@@ -263,15 +325,27 @@ class Blob {
    */
   void ShareDiff(const Blob& other);
 
+  void ShareMask(const Blob& other);
+  void ShareCsrval(const Blob& other);
+  void ShareCsrrowptr(const Blob& other);
+  void ShareCsrcolind(const Blob& other);
+
   bool ShapeEquals(const BlobProto& other);
 
  protected:
   shared_ptr<SyncedMemory> data_;
   shared_ptr<SyncedMemory> diff_;
+  shared_ptr<SyncedMemory> mask_;
+  shared_ptr<SyncedMemory> csrval_;
+  shared_ptr<SyncedMemory> csrrowptr_;
+  shared_ptr<SyncedMemory> csrcolind_;
+
   shared_ptr<SyncedMemory> shape_data_;
   vector<int> shape_;
+  bool sparse_;
   int count_;
   int capacity_;
+  int nnz_;
 
   DISABLE_COPY_AND_ASSIGN(Blob);
 };  // class Blob

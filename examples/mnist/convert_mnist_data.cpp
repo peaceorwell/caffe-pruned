@@ -29,6 +29,11 @@
 
 using namespace caffe;  // NOLINT(build/namespaces)
 using std::string;
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
 
 DEFINE_string(backend, "lmdb", "The backend for storing the result");
 

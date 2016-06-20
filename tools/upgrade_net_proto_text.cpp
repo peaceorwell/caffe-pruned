@@ -13,6 +13,12 @@
 
 using std::ofstream;
 
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
+
 using namespace caffe;  // NOLINT(build/namespaces)
 
 int main(int argc, char** argv) {

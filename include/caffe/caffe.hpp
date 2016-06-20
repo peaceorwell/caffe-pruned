@@ -17,5 +17,5 @@
 #include "caffe/util/benchmark.hpp"
 #include "caffe/util/io.hpp"
 #include "caffe/util/upgrade_proto.hpp"
-
+DECLARE_string(step);
 #endif  // CAFFE_CAFFE_HPP_

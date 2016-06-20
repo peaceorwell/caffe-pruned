@@ -17,6 +17,14 @@ using caffe::Caffe;
 using caffe::Datum;
 using caffe::Net;
 using std::string;
+
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
+
+
 namespace db = caffe::db;
 
 template<typename Dtype>

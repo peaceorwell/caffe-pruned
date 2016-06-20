@@ -96,7 +96,7 @@ using std::vector;
 // A global initialization function that you should call in your main function.
 // Currently it initializes google flags and google logging.
 void GlobalInit(int* pargc, char*** pargv);
-
+//DECLARE_string(step);
 // A singleton class to hold common caffe stuff, such as the handler that
 // caffe is going to use for cublas, curand, etc.
 class Caffe {
@@ -133,6 +133,8 @@ class Caffe {
   }
 #ifndef CPU_ONLY
   inline static cublasHandle_t cublas_handle() { return Get().cublas_handle_; }
+  inline static cusparseHandle_t cusparse_handle(){ return Get().cusparse_handle_;}
+  inline static cusparseMatDescr_t cusparse_descr(){ return Get().cusparse_descr_;}
   inline static curandGenerator_t curand_generator() {
     return Get().curand_generator_;
   }
@@ -167,6 +169,8 @@ class Caffe {
  protected:
 #ifndef CPU_ONLY
   cublasHandle_t cublas_handle_;
+  cusparseMatDescr_t cusparse_descr_;
+  cusparseHandle_t cusparse_handle_;
   curandGenerator_t curand_generator_;
 #endif
   shared_ptr<RNG> random_generator_;

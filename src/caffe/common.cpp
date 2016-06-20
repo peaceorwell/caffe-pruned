@@ -105,13 +105,24 @@ void* Caffe::RNG::generator() {
 #else  // Normal GPU + CPU Caffe.
 
 Caffe::Caffe()
-    : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
-    mode_(Caffe::CPU), solver_count_(1), root_solver_(true) {
+    : cublas_handle_(NULL),cusparse_handle_(NULL),cusparse_descr_(NULL),curand_generator_(NULL),random_generator_(),mode_(Caffe::CPU), solver_count_(1), root_solver_(true){
   // Try to create a cublas handler, and report an error if failed (but we will
   // keep the program running as one might just want to run CPU code).
-  if (cublasCreate(&cublas_handle_) != CUBLAS_STATUS_SUCCESS) {
+    LOG(INFO)<<"caffe init.";
+    if (cublasCreate(&cublas_handle_) != CUBLAS_STATUS_SUCCESS) {
     LOG(ERROR) << "Cannot create Cublas handle. Cublas won't be available.";
   }
+//add cusparse handler
+  if (cusparseCreate(&cusparse_handle_)!=CUSPARSE_STATUS_SUCCESS){
+    LOG(ERROR) << "cannot create Cusparse handle,Cusparse won't be available.";
+  }
+ if(cusparseCreateMatDescr(&cusparse_descr_)!=CUSPARSE_STATUS_SUCCESS){
+   LOG(ERROR) << "cannot create Cusparse descr,descr won't be available.";
+ }else{
+  cusparseSetMatType(cusparse_descr_,CUSPARSE_MATRIX_TYPE_GENERAL);
+  cusparseSetMatIndexBase(cusparse_descr_,CUSPARSE_INDEX_BASE_ZERO);
+  LOG(INFO)<<"init descr";
+ }
   // Try to create a curand handler.
   if (curandCreateGenerator(&curand_generator_, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS ||
@@ -119,10 +130,13 @@ Caffe::Caffe()
       != CURAND_STATUS_SUCCESS) {
     LOG(ERROR) << "Cannot create Curand generator. Curand won't be available.";
   }
+  LOG(INFO)<<"caffe finish";
 }
 
 Caffe::~Caffe() {
+  if (cusparse_descr_) CUSPARSE_CHECK(cusparseDestroyMatDescr(cusparse_descr_));
   if (cublas_handle_) CUBLAS_CHECK(cublasDestroy(cublas_handle_));
+  if (cusparse_handle_) CUSPARSE_CHECK(cusparseDestroy(cusparse_handle_));
   if (curand_generator_) {
     CURAND_CHECK(curandDestroyGenerator(curand_generator_));
   }
@@ -156,9 +170,16 @@ void Caffe::SetDevice(const int device_id) {
   // may perform initialization using the GPU.
   CUDA_CHECK(cudaSetDevice(device_id));
   if (Get().cublas_handle_) CUBLAS_CHECK(cublasDestroy(Get().cublas_handle_));
+  if (Get().cusparse_descr_)CUSPARSE_CHECK(cusparseDestroyMatDescr(Get().cusparse_descr_));
+  if (Get().cusparse_handle_)CUSPARSE_CHECK(cusparseDestroy(Get().cusparse_handle_));
   if (Get().curand_generator_) {
     CURAND_CHECK(curandDestroyGenerator(Get().curand_generator_));
   }
+  CUSPARSE_CHECK(cusparseCreate(&Get().cusparse_handle_));
+  CUSPARSE_CHECK(cusparseCreateMatDescr(&Get().cusparse_descr_));
+//  cusparseSetMatType(cusparse_descr_,CUSPARSE_MATRIX_TYPE_GENERAL);
+//  cusparseSetMatIndexBase(cusparse_descr_,CUSPARSE_INDEX_BASE_ZERO);
+  LOG(INFO)<<"set descr";
   CUBLAS_CHECK(cublasCreate(&Get().cublas_handle_));
   CURAND_CHECK(curandCreateGenerator(&Get().curand_generator_,
       CURAND_RNG_PSEUDO_DEFAULT));
@@ -255,6 +276,38 @@ Caffe::RNG& Caffe::RNG::operator=(const RNG& other) {
 
 void* Caffe::RNG::generator() {
   return static_cast<void*>(generator_->rng());
+}
+
+const char* cusparseGetErrorString(cusparseStatus_t error){
+    switch (error){
+        case CUSPARSE_STATUS_SUCCESS:
+            return "CUSPARSE_STATUS_SUCCESS";
+        case CUSPARSE_STATUS_NOT_INITIALIZED:
+            return "CUSPARSE_STATUS_NOT_INITIALIZED";
+        case CUSPARSE_STATUS_ALLOC_FAILED:
+            return "CUSPARSE_STATUS_ALLOC_FAILED";
+        case CUSPARSE_STATUS_INVALID_VALUE:
+            return "CUSPARSE_STATUS_INVALID_VALUE";
+        case CUSPARSE_STATUS_ZERO_PIVOT:
+            return "CUSPARSE_STATUS_ZERO_PIVOT";
+        case CUSPARSE_STATUS_ARCH_MISMATCH:
+            return  "CUSPARSE_STATUS_ARCH_MISMATCH";
+        case CUSPARSE_STATUS_MAPPING_ERROR:
+            return "CUSPARSE_STATUS_MAPPING_ERROR";
+        case CUSPARSE_STATUS_EXECUTION_FAILED:
+            return "CUSPARSE_STATUS_EXECUTION_FAILED";
+        case CUSPARSE_STATUS_INTERNAL_ERROR:
+            return "CUSPARSE_STATUS_INTERNAL_ERROR";
+#if CUDA_VERSION>=6000
+        case CUSPARSE_STATUS_MATRIX_TYPE_NOT_SUPPORTED:
+            return "CUSPARSE_STATUS_NOT_SUPPORTED";
+#endif
+#if CUDA_VERSION>=6050
+        //case CUSPARSE_STATUS_LICENSE_ERROR:
+          //  return "CUSPARSE_STATUS_LICENSE_ERROR";
+#endif
+    }
+    return "unknown cusparse status ";
 }
 
 const char* cublasGetErrorString(cublasStatus_t error) {

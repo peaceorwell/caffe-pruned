@@ -15,6 +15,15 @@ using std::ofstream;
 
 using namespace caffe;  // NOLINT(build/namespaces)
 
+
+
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
+
+
 int main(int argc, char** argv) {
   FLAGS_alsologtostderr = 1;  // Print output to stderr (while still logging)
   ::google::InitGoogleLogging(argv[0]);

@@ -29,7 +29,7 @@ layer {
   }
   data_param {
     source: "examples/mnist/mnist_test_lmdb"
-    batch_size: 100
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -122,6 +122,7 @@ layer {
     }
   }
 }
+
 layer {
   name: "relu1"
   type: "ReLU"

@@ -20,6 +20,18 @@ class Filler {
  public:
   explicit Filler(const FillerParameter& param) : filler_param_(param) {}
   virtual ~Filler() {}
+  void FillMask(Blob<Dtype>* blob){
+    if(!blob->sparse())return;
+    Dtype* mask =blob->mutable_cpu_mask();
+    const int count = blob->count();
+    const Dtype mvalue = this->filler_param_.mvalue();
+    CHECK(count);
+    for(int i=0;i<count;i++){
+        mask[i]=mvalue;
+    }
+    CHECK_EQ(this->filler_param_.sparse(), -1)
+                  << "Sparsity not supported by this Filler.";
+  }
   virtual void Fill(Blob<Dtype>* blob) = 0;
  protected:
   FillerParameter filler_param_;
@@ -33,6 +45,7 @@ class ConstantFiller : public Filler<Dtype> {
   explicit ConstantFiller(const FillerParameter& param)
       : Filler<Dtype>(param) {}
   virtual void Fill(Blob<Dtype>* blob) {
+      Filler<Dtype>:: FillMask(blob);
     Dtype* data = blob->mutable_cpu_data();
     const int count = blob->count();
     const Dtype value = this->filler_param_.value();
@@ -68,6 +81,7 @@ class GaussianFiller : public Filler<Dtype> {
       : Filler<Dtype>(param) {}
   virtual void Fill(Blob<Dtype>* blob) {
     Dtype* data = blob->mutable_cpu_data();
+    Filler<Dtype>:: FillMask(blob);
     CHECK(blob->count());
     caffe_rng_gaussian<Dtype>(blob->count(), Dtype(this->filler_param_.mean()),
         Dtype(this->filler_param_.std()), blob->mutable_cpu_data());
@@ -146,6 +160,7 @@ class XavierFiller : public Filler<Dtype> {
   explicit XavierFiller(const FillerParameter& param)
       : Filler<Dtype>(param) {}
   virtual void Fill(Blob<Dtype>* blob) {
+      Filler<Dtype>:: FillMask(blob);
     CHECK(blob->count());
     int fan_in = blob->count() / blob->num();
     int fan_out = blob->count() / blob->channels();

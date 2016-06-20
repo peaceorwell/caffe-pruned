@@ -19,6 +19,17 @@ message BlobProto {
   optional int32 channels = 2 [default = 0];
   optional int32 height = 3 [default = 0];
   optional int32 width = 4 [default = 0];
+  optional bool  sparse = 10 [default = false];
+  
+  repeated float mask = 11 [packed = true];
+  repeated double double_mask =12 [packed =true];
+  
+  optional int32 nnz = 13 [default = 0];
+  repeated float csrval=14 [packed =true];
+  repeated int32 csrrowptr =15 [packed =true];
+  repeated int32 csrcolind =16 [packed =true];
+
+  repeated double double_csrval=17 [packed =true];
 }
 
 // The BlobProtoVector is simply a way to pass multiple blobproto instances
@@ -44,6 +55,7 @@ message FillerParameter {
   // The filler type.
   optional string type = 1 [default = 'constant'];
   optional float value = 2 [default = 0]; // the value in constant filler
+  optional float mvalue= 10 [default = 1];
   optional float min = 3 [default = 0]; // the min value in uniform filler
   optional float max = 4 [default = 1]; // the max value in uniform filler
   optional float mean = 5 [default = 0]; // the mean value in Gaussian filler

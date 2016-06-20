@@ -17,10 +17,13 @@ using namespace caffe;  // NOLINT(build/namespaces)
 using std::max;
 using std::pair;
 using boost::scoped_ptr;
-
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
 DEFINE_string(backend, "lmdb",
         "The backend {leveldb, lmdb} containing the images");
-
 int main(int argc, char** argv) {
   ::google::InitGoogleLogging(argv[0]);
 

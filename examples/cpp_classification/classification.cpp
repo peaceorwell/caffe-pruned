@@ -14,6 +14,11 @@
 #ifdef USE_OPENCV
 using namespace caffe;  // NOLINT(build/namespaces)
 using std::string;
+////////////ADDED BY LYN/////////////////
+DEFINE_string(step,"one",
+        "optional;choose the type of proto:"
+        "one,two or three");
+///////////ADDED BY LYN/////////////////
 
 /* Pair (label, confidence) representing a prediction. */
 typedef std::pair<string, float> Prediction;
