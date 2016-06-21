@@ -14,7 +14,7 @@ layer {
   }
   data_param {
     source: "/home/wangd/data_wangd/example_1/train_lmdb"
-    batch_size: 4
+    batch_size:32 
     backend: LMDB
   }
 }
@@ -33,7 +33,7 @@ layer {
   }
   data_param {
     source: "/home/wangd/data_wangd/example_1/test_lmdb"
-    batch_size:4 
+    batch_size:1
     backend: LMDB
   }
 }

@@ -537,9 +537,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
   CHECK_LT(end, layers_.size());
   Dtype loss = 0;
   for (int i = start; i <= end; ++i) {
-    //LOG(INFO) << "Forwarding START" << layer_names_[i];
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
-    //LOG(INFO) << "Forwarding END" << layer_names_[i];
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }
   }
@@ -583,7 +581,6 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
   CHECK_GE(end, 0);
   CHECK_LT(start, layers_.size());
   for (int i = start; i >= end; --i) {
-    //LOG(INFO)<<"DEBUG BY LYN BACKWARD: "<<layer_names_[i];
     if (layer_need_backward_[i]) {
       layers_[i]->Backward(
           top_vecs_[i], bottom_need_backward_[i], bottom_vecs_[i]);

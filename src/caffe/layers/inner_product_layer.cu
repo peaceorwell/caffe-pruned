@@ -14,7 +14,6 @@ void InnerProductLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype* top_data = top[0]->mutable_gpu_data();
   const Dtype* weight = this->blobs_[0]->gpu_data();
   if (M_ == 1) {
-  LOG(INFO)<<"here is csrmv";
   const Dtype* csrval = this->blobs_[0]->gpu_csrval();
   const int* csrrowptr = this->blobs_[0]->gpu_csrrowptr();
   const int* csrcolind = this->blobs_[0]->gpu_csrcolind();
